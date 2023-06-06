@@ -11,7 +11,7 @@ from sqlmodel import SQLModel
 from alembic import context
 
 # Import models here if using SQLite in development environment. Otherwise, use migration to set up the database.
-from src.api.v1.auth.entities.user import User
+from src.core.models import User, UserRole, Customer, Address, Employee
 
 from dotenv import load_dotenv
 

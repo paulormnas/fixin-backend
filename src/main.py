@@ -1,18 +1,16 @@
 import json
 from os import getenv
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-
-from src.core.errors.errors import AppException
-from src.core.middlewares.ExceptionsHandler import error_handler_middleware
-from src.config.database.setup import get_session
-from src.api.v1.routes import v1_router
+from api import api_router
+from core.middlewares.ExceptionsHandler import error_handler_middleware
+from config.database.setup import get_db_session
 
 app = FastAPI()
 
 
-@app.exception_handler(AppException)
+@app.exception_handler(HTTPException)
 async def validation_exception_handler(request, e):
     return await error_handler_middleware(request, e)
 
@@ -43,4 +41,4 @@ app.add_middleware(
 )
 
 
-app.include_router(v1_router, dependencies=[Depends(get_session)])
+app.include_router(api_router, dependencies=[Depends(get_db_session)])

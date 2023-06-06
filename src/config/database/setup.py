@@ -12,7 +12,7 @@ db_logs = "debug" if ENVIRONMENT == "development" else True
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=db_logs)
 
 
-async def get_session() -> AsyncSession:
+async def get_db_session() -> AsyncSession:
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with async_session() as session:
         yield session

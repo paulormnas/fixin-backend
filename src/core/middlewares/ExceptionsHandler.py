@@ -2,13 +2,11 @@ import sentry_sdk
 from os import getenv
 from http.client import INTERNAL_SERVER_ERROR
 
-from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from src.core.errors.Slug import Slug
-from src.core.errors.errors import BadRequest, AppException
 from dotenv import load_dotenv
 
+from src.core.exceptions import AppException
 
 load_dotenv()
 
