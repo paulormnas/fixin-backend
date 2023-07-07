@@ -16,13 +16,15 @@ class UserRole(SQLModel, table=True):
 
 
 class User(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True, index=True)
+    id: int | None = Field(nullable=False, default=None, primary_key=True, index=True)
     username: str = Field(unique=True)
     hashed_password: str | None = Field(nullable=False)
     first_name: str = Field(default=None)
     last_name: str = Field(default=None)
     is_active: bool = Field(nullable=False, default=True)
-    role: int = Field(nullable=False, default=2, foreign_key="user_role.id")
+    role: int = Field(
+        nullable=False, default=UserRoleEnum.Customer.value, foreign_key="user_role.id"
+    )
 
 
 class Address(SQLModel, table=True):

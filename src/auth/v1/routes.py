@@ -2,20 +2,25 @@ from typing import Annotated
 
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import Depends, APIRouter
-from src.auth.services import signin, signup
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-auth_v1_router = APIRouter(prefix="/auth")
+from src.auth.services import signin_user, signup_user
+from src.config.database.setup import get_db_session
+
+auth_v1_router = APIRouter(prefix="/v1/auth")
 
 
 @auth_v1_router.post("/signin/")
 async def signin(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db_session: AsyncSession = Depends(get_db_session),
 ):
-    return signin(form_data)
+    return await signin_user(form_data.username, form_data.password, db_session)
 
 
 @auth_v1_router.post("/signup/", status_code=201)
 async def signup(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db_session: AsyncSession = Depends(get_db_session),
 ):
-    return signup(form_data)
+    return await signup_user(form_data.username, form_data.password, db_session)

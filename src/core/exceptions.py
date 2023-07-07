@@ -3,13 +3,6 @@ from http import HTTPStatus
 from fastapi import HTTPException
 
 
-class AppException(Exception):
-    def __init__(self, slug: str, status, message: str):
-        self.slug = slug
-        self.status = status
-        self.message = message
-
-
 class InvalidUsername(HTTPException):
     def __init__(self):
         super().__init__(

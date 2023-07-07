@@ -1,28 +1,23 @@
-from typing import Annotated
-
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import Depends
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.auth.exceptions import IncorrectUsernameOrPassword
 from src.auth.schemas import AuthenticatedUser
 from src.core.exceptions import InvalidUsername
 from src.core.middlewares.AuthenticationMiddleware import create_token
-from src.core.middlewares.CryptContextMiddleware import get_crypt_context
 from src.core.models import User
 from src.users.service import create_customer, get_user_by_username
+from passlib.hash import pbkdf2_sha512
 
-context = get_crypt_context()
 
-
-async def signin(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-):
-    user: User = get_user_by_username(form_data.username)
+async def signin_user(
+    username: str, password: str, db_session: AsyncSession
+) -> AuthenticatedUser:
+    user: User = await get_user_by_username(username, db_session)
 
     if user is None:
         raise IncorrectUsernameOrPassword()
 
-    password_matches = context.verify(form_data.password, user.hashed_password)
+    password_matches = pbkdf2_sha512.verify(password, user.hashed_password)
     if not password_matches:
         raise IncorrectUsernameOrPassword()
 
@@ -35,15 +30,15 @@ async def signin(
     return auth_user
 
 
-async def signup(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+async def signup_user(
+    username: str, password: str, db_session: AsyncSession
 ) -> AuthenticatedUser:
-    user: User = get_user_by_username(form_data.username)
+    user: User = await get_user_by_username(username, db_session)
 
     if user is not None:
         raise InvalidUsername()
 
-    customer = create_customer(form_data.username, form_data.password)
+    customer = await create_customer(username, password, db_session)
 
     access_token = await create_token(customer.id, customer.username, customer.role)
     auth_user = AuthenticatedUser(

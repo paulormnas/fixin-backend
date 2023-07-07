@@ -3,9 +3,9 @@ from os import getenv
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from api import api_router
-from core.middlewares.ExceptionsHandler import error_handler_middleware
-from config.database.setup import get_db_session
+from src.api import api_router
+from src.core.middlewares.ExceptionsHandler import error_handler_middleware
+from src.config.database.setup import get_db_session
 
 app = FastAPI()
 

@@ -5,14 +5,12 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.config.database.setup import get_db_session
 from src.core.exceptions import InvalidUsername, Unauthorized
 from src.core.middlewares.AuthenticationMiddleware import validate_token
-from src.core.middlewares.CryptContextMiddleware import get_crypt_context
 from src.core.models import User, Customer, UserRoleEnum, Employee
 from src.users.schemas import NewCustomer, NewEmployee
+from passlib.hash import pbkdf2_sha512
 
-context = get_crypt_context()
 
-
-def check_authorization(authorization: str) -> bool:
+async def check_authorization(authorization: str) -> bool:
     if authorization is None:
         raise Unauthorized()
 
@@ -24,31 +22,29 @@ def check_authorization(authorization: str) -> bool:
     return True
 
 
-def get_users(db_session: AsyncSession = Depends(get_db_session)) -> list[User]:
+async def get_users(db_session: AsyncSession) -> list[User]:
     result = await db_session.execute(select(User))
     user: list[User] = result.scalar()
     return user
 
 
-def get_user_by_username(
-    username: str, db_session: AsyncSession = Depends(get_db_session)
-) -> User | None:
+async def get_user_by_username(username: str, db_session: AsyncSession) -> User | None:
     result = await db_session.execute(select(User).where(User.username == username))
     user: User = result.scalar_one_or_none()
     return user
 
 
-def create_user(
+async def create_user(
     username: str,
     password: str,
+    db_session: AsyncSession,
     role: int = UserRoleEnum.Customer.value,
-    db_session: AsyncSession = Depends(get_db_session),
 ) -> User:
-    user = get_user_by_username(username)
+    user = await get_user_by_username(username, db_session)
     if user is not None:
         raise InvalidUsername()
 
-    hashed_password = context.hash(password)
+    hashed_password = pbkdf2_sha512.hash(password)
     user = User(username=username, hashed_password=hashed_password, role=role)
     db_session.add(user)
     await db_session.commit()
@@ -56,11 +52,14 @@ def create_user(
     return user
 
 
-def create_customer(
-    username: str, password: str, db_session: AsyncSession = Depends(get_db_session)
+async def create_customer(
+    username: str, password: str, db_session: AsyncSession
 ) -> NewCustomer:
-    user = create_user(
-        username=username, password=password, role=UserRoleEnum.Customer.value
+    user = await create_user(
+        username=username,
+        password=password,
+        role=UserRoleEnum.Customer.value,
+        db_session=db_session,
     )
 
     customer = Customer(user_id=user.id)
@@ -70,11 +69,14 @@ def create_customer(
     return NewCustomer(id=user.id, role=user.role, username=user.username)
 
 
-def create_employee(
+async def create_employee(
     username: str, password: str, db_session: AsyncSession = Depends(get_db_session)
 ) -> NewEmployee:
-    user = create_user(
-        username=username, password=password, role=UserRoleEnum.Employee.value
+    user = await create_user(
+        username=username,
+        password=password,
+        role=UserRoleEnum.Employee.value,
+        db_session=db_session,
     )
 
     employee = Employee(user_id=user.id)

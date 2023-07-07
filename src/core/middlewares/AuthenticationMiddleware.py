@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from http.client import UNAUTHORIZED
 
+from dotenv import load_dotenv
 from jose import JWTError, jwt, ExpiredSignatureError
 from os import getenv
 from fastapi import Depends, HTTPException
@@ -8,6 +9,8 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 
 from src.core.models import User
+
+load_dotenv("src/config/.env")
 
 JWT_SECRET = getenv("JWT_SECRET")
 JWT_ALGORITHM = getenv("JWT_ALGORITHM")
